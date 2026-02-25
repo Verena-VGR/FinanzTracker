@@ -36,20 +36,25 @@ let filterMonth = new Date().getMonth() + 1;
 let filterYear = new Date().getFullYear();
 let mainChart = null;
 
-// DOM Elements
-const form = document.getElementById('transactionForm');
-const formContainer = document.getElementById('formContainer');
-const toggleFormBtn = document.getElementById('toggleFormBtn');
-const typeSelect = document.getElementById('type');
-const categorySelect = document.getElementById('category');
-const transactionList = document.getElementById('transactionList');
-const incomeBreakdown = document.getElementById('incomeBreakdown');
-const expenseBreakdown = document.getElementById('expenseBreakdown');
-const filterMonthSelect = document.getElementById('filterMonth');
-const filterYearSelect = document.getElementById('filterYear');
+// DOM Elements (will be initialized in init)
+let form, formContainer, toggleFormBtn, typeSelect, categorySelect, transactionList, incomeBreakdown, expenseBreakdown, filterMonthSelect, filterYearSelect;
 
 // Initialize
 function init() {
+    // Initialize DOM Elements
+    form = document.getElementById('transactionForm');
+    formContainer = document.getElementById('formContainer');
+    toggleFormBtn = document.getElementById('toggleFormBtn');
+    typeSelect = document.getElementById('type');
+    categorySelect = document.getElementById('category');
+    transactionList = document.getElementById('transactionList');
+    incomeBreakdown = document.getElementById('incomeBreakdown');
+    expenseBreakdown = document.getElementById('expenseBreakdown');
+    filterMonthSelect = document.getElementById('filterMonth');
+    filterYearSelect = document.getElementById('filterYear');
+
+    if (!form) return; // Guard against missing elements
+
     // Set default date
     document.getElementById('date').value = new Date().toISOString().split('T')[0];
     
@@ -64,6 +69,78 @@ function init() {
     
     // Lucide Icons
     lucide.createIcons();
+
+    // Event Listeners
+    setupEventListeners();
+}
+
+function updateToggleIcon(isHidden) {
+    const iconContainer = document.getElementById('toggleIcon');
+    if (iconContainer) {
+        iconContainer.innerHTML = isHidden ? '<i data-lucide="plus-circle"></i>' : '<i data-lucide="chevron-up"></i>';
+        lucide.createIcons();
+    }
+}
+
+function setupEventListeners() {
+    toggleFormBtn.addEventListener('click', () => {
+        formContainer.classList.toggle('hidden');
+        updateToggleIcon(formContainer.classList.contains('hidden'));
+    });
+
+    typeSelect.addEventListener('change', updateCategoryOptions);
+
+    filterMonthSelect.addEventListener('change', (e) => {
+        filterMonth = e.target.value;
+        render();
+    });
+
+    filterYearSelect.addEventListener('change', (e) => {
+        filterYear = e.target.value;
+        render();
+    });
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const dateVal = document.getElementById('date').value;
+        const dateObj = new Date(dateVal);
+        
+        const newTransaction = {
+            id: crypto.randomUUID(),
+            date: dateVal,
+            type: typeSelect.value,
+            category: categorySelect.value,
+            description: document.getElementById('description').value,
+            amount: parseFloat(document.getElementById('amount').value),
+            month: dateObj.getMonth() + 1,
+            year: dateObj.getFullYear(),
+            isFixed: document.getElementById('isFixed').checked
+        };
+        
+        transactions.unshift(newTransaction);
+        
+        if (newTransaction.isFixed) {
+            const nextDate = new Date(dateObj);
+            nextDate.setMonth(nextDate.getMonth() + 1);
+            const nextTransaction = {
+                ...newTransaction,
+                id: crypto.randomUUID(),
+                date: nextDate.toISOString().split('T')[0],
+                month: nextDate.getMonth() + 1,
+                year: nextDate.getFullYear()
+            };
+            transactions.unshift(nextTransaction);
+        }
+        
+        form.reset();
+        document.getElementById('date').value = new Date().toISOString().split('T')[0];
+        updateCategoryOptions();
+        formContainer.classList.add('hidden');
+        updateToggleIcon(true);
+        
+        populateFilters();
+        render();
+    });
 }
 
 function updateCategoryOptions() {
@@ -294,76 +371,9 @@ function updateChart(filtered) {
     });
 }
 
-// Actions
-window.deleteTransaction = function(id) {
-    transactions = transactions.filter(t => t.id !== id);
-    render();
-};
-
-toggleFormBtn.addEventListener('click', () => {
-    formContainer.classList.toggle('hidden');
-    const icon = toggleFormBtn.querySelector('i');
-    if (formContainer.classList.contains('hidden')) {
-        icon.setAttribute('data-lucide', 'plus-circle');
-    } else {
-        icon.setAttribute('data-lucide', 'chevron-up');
-    }
-    lucide.createIcons();
-});
-
-typeSelect.addEventListener('change', updateCategoryOptions);
-
-filterMonthSelect.addEventListener('change', (e) => {
-    filterMonth = e.target.value;
-    render();
-});
-
-filterYearSelect.addEventListener('change', (e) => {
-    filterYear = e.target.value;
-    render();
-});
-
-form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const dateVal = document.getElementById('date').value;
-    const dateObj = new Date(dateVal);
-    
-    const newTransaction = {
-        id: crypto.randomUUID(),
-        date: dateVal,
-        type: typeSelect.value,
-        category: categorySelect.value,
-        description: document.getElementById('description').value,
-        amount: parseFloat(document.getElementById('amount').value),
-        month: dateObj.getMonth() + 1,
-        year: dateObj.getFullYear(),
-        isFixed: document.getElementById('isFixed').checked
-    };
-    
-    transactions.unshift(newTransaction);
-    
-    if (newTransaction.isFixed) {
-        const nextDate = new Date(dateObj);
-        nextDate.setMonth(nextDate.getMonth() + 1);
-        const nextTransaction = {
-            ...newTransaction,
-            id: crypto.randomUUID(),
-            date: nextDate.toISOString().split('T')[0],
-            month: nextDate.getMonth() + 1,
-            year: nextDate.getFullYear()
-        };
-        transactions.unshift(nextTransaction);
-    }
-    
-    form.reset();
-    document.getElementById('date').value = new Date().toISOString().split('T')[0];
-    updateCategoryOptions();
-    formContainer.classList.add('hidden');
-    toggleFormBtn.querySelector('i').setAttribute('data-lucide', 'plus-circle');
-    
-    populateFilters();
-    render();
-});
-
 // Start
-init();
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
