@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanzTracker - Export</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-[#f5f5f5] text-slate-900 font-sans pb-12 antialiased">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div class="max-w-2xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white shadow-sm">
+                    <i data-lucide="trending-up"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight">FinanzTracker</h1>
+            </div>
+            <button id="toggleFormBtn" class="p-2 bg-slate-900 text-white rounded-full hover:bg-slate-800 transition-colors shadow-md">
+                <i data-lucide="plus-circle"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-2xl mx-auto px-4 mt-6 space-y-6">
+        
+        <!-- Add Transaction Form -->
+        <div id="formContainer" class="hidden overflow-hidden transition-all duration-300">
+            <form id="transactionForm" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Datum</label>
+                        <input type="date" id="date" name="date" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500" required>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Typ</label>
+                        <select id="type" name="type" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="Ausgabe">Ausgabe</option>
+                            <option value="Einnahme">Einnahme</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Kategorie</label>
+                        <select id="category" name="category" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                            <!-- Categories will be injected by JS -->
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Betrag (€)</label>
+                        <input type="number" id="amount" name="amount" step="0.01" placeholder="0.00" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500" required>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Beschreibung</label>
+                    <div class="flex gap-4 items-center">
+                        <input type="text" id="description" name="description" placeholder="z.B. Wocheneinkauf" class="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                        <label class="flex items-center gap-2 cursor-pointer select-none shrink-0">
+                            <input type="checkbox" id="isFixed" name="isFixed" class="w-5 h-5 rounded border-slate-300 text-emerald-500">
+                            <span class="text-sm font-medium text-slate-600">Fixkosten?</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20">
+                    Eintrag speichern
+                </button>
+            </form>
+        </div>
+
+        <!-- Filters -->
+        <div class="flex gap-3 items-center overflow-x-auto pb-2 scrollbar-hide">
+            <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm shrink-0">
+                <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
+                <select id="filterMonth" class="bg-transparent outline-none text-sm font-medium">
+                    <!-- Months will be injected by JS -->
+                </select>
+            </div>
+            <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm shrink-0">
+                <i data-lucide="filter" class="w-4 h-4 text-slate-400"></i>
+                <select id="filterYear" class="bg-transparent outline-none text-sm font-medium">
+                    <!-- Years will be injected by JS -->
+                </select>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Einnahmen</p>
+                <p id="statIncome" class="text-2xl font-bold text-emerald-600">+0.00 €</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Ausgaben</p>
+                <p id="statExpenses" class="text-2xl font-bold text-rose-500">-0.00 €</p>
+            </div>
+            <div class="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 shadow-sm">
+                <p class="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-1">Sparen</p>
+                <p id="statSavings" class="text-2xl font-bold text-indigo-600">0.00 €</p>
+            </div>
+            <div id="balanceCard" class="p-5 rounded-2xl border shadow-sm bg-emerald-50 border-emerald-100">
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Differenz</p>
+                <p id="statBalance" class="text-2xl font-bold text-emerald-700">+0.00 €</p>
+            </div>
+        </div>
+
+        <!-- Visualization -->
+        <div id="chartSection" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hidden">
+            <div class="flex items-center gap-2 mb-6">
+                <i data-lucide="pie-chart" class="w-5 h-5 text-slate-400"></i>
+                <h2 class="font-bold text-slate-800">Gesamtübersicht</h2>
+            </div>
+            <div class="h-[300px] w-full relative">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Income Breakdown -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex items-center gap-2 mb-4">
+                <i data-lucide="wallet" class="w-5 h-5 text-slate-400"></i>
+                <h2 class="font-bold text-slate-800">Einnahmen nach Kategorie</h2>
+            </div>
+            <div id="incomeBreakdown" class="space-y-3">
+                <!-- Injected by JS -->
+            </div>
+        </div>
+
+        <!-- Category Breakdown -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex items-center gap-2 mb-4">
+                <i data-lucide="pie-chart" class="w-5 h-5 text-slate-400"></i>
+                <h2 class="font-bold text-slate-800">Ausgaben nach Kategorie</h2>
+            </div>
+            <div id="expenseBreakdown" class="space-y-3">
+                <!-- Injected by JS -->
+            </div>
+        </div>
+
+        <!-- Transaction List -->
+        <div class="space-y-4">
+            <h2 class="font-bold text-slate-800 flex items-center gap-2">
+                <i data-lucide="euro" class="w-5 h-5 text-slate-400"></i>
+                Transaktionen
+            </h2>
+            <div id="transactionList" class="space-y-3">
+                <!-- Injected by JS -->
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

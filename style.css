@@ -1,0 +1,61 @@
+/* Custom Styles for FinanzTracker Export */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+#formContainer.hidden {
+    display: none;
+}
+
+#formContainer {
+    display: block;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.transaction-item {
+    transition: all 0.2s ease;
+}
+
+.transaction-item:hover {
+    transform: translateX(4px);
+}
+
+.transaction-item .delete-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.transaction-item:hover .delete-btn {
+    opacity: 1;
+}
+
+/* Custom Checkbox Color */
+input[type="checkbox"]:checked {
+    background-color: #10b981;
+    border-color: #10b981;
+}
